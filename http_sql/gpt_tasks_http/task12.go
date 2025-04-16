@@ -31,15 +31,42 @@ cookie, err := r.Cookie("session_id")
 
 */
 
-// package gpt_tasks_http
+package gpt_tasks_http
 
-// import (
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
 
-// )
+func cookieHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/login":
+		http.SetCookie(w, &http.Cookie{
+			Name: "session_id",
+			Value: "abc123",
+			Path: "/",
+		})
+		fmt.Fprintln(w, "Logged in")
+	case "/dashboard":
+		cookie, err := r.Cookie("session_id")
+		if err != nil || errors.Is(err, http.ErrNoCookie) {
+			http.Error(w, "Please login first", http.StatusUnauthorized)
+			return
+		}
+		if cookie.Value != "abc123" {
+			http.Error(w, "Invalid Session", http.StatusUnauthorized)
+			return
+		}
+		fmt.Fprintln(w, "Welcome to dashboard")
+	default:
+		http.NotFound(w, r)
+	}
+}
 
-// func 
 
+func Task12() {
+	http.HandleFunc("/", cookieHandler)
 
-// func Task12() {
-
-// }
+	http.ListenAndServe(":8080", nil)
+}
